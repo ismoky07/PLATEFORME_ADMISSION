@@ -1,0 +1,34 @@
+{
+  "admin": {
+    "username": "admin",
+    "password_hash": "8c6976e5b5410415bde908bd4dee15dfb167a9c873fc4bb8a81f6f2ab448a918",
+    "role": "Administrateur",
+    "permissions": [
+      "all"
+    ],
+    "created_at": "2025-05-30T18:13:07.599368",
+    "last_login": "2025-05-30T18:45:43.148448"
+  },
+  "prof_martin": {
+    "username": "prof_martin",
+    "password_hash": "fcf730b6d95236ecd3c9fc2d92d7b6b2bb061514961aec041d6c7a7192f592e4",
+    "role": "Examinateur",
+    "permissions": [
+      "view",
+      "validate",
+      "export"
+    ],
+    "created_at": "2025-05-30T18:13:07.599437",
+    "last_login": null
+  },
+  "secretaire": {
+    "username": "secretaire",
+    "password_hash": "65375049b9e4d7cad6c9ba286fdeb9394b28135a3e84136404cfccfdcc438894",
+    "role": "Visualiseur",
+    "permissions": [
+      "view"
+    ],
+    "created_at": "2025-05-30T18:13:07.599504",
+    "last_login": null
+  }
+}

@@ -1,0 +1,334 @@
+# 🤖 Agent OCR et Comparaison
+
+Agent intelligent pour l'analyse automatisée des bulletins scolaires via OCR et la comparaison avec les notes saisies manuellement par les candidats.
+
+
+## 🎯 Objectifs
+
+Cet agent permet de :
+- **📄 Analyser automatiquement** les bulletins scolaires PDF
+- **🔍 Extraire les notes** via OCR (GPT-4o Vision)
+- **⚖️ Comparer intelligemment** les notes OCR avec les notes saisies manuellement
+- **🚨 Détecter les anomalies** et incohérences
+- **📊 Générer des rapports** détaillés de validation
+- **✅ Recommander** la validation ou le rejet automatiquement
+
+## 🏗️ Architecture
+
+```
+agent_OCR_Comparaison/
+├── __init__.py                    # Package principal et exports
+├── models.py                      # Modèles Pydantic (notes, bulletins, résultats)
+├── utils_candidature.py           # Utilitaires pour candidatures
+├── workflow_ocr_comparaison.py    # Workflow principal LangGraph
+├── charger_bulletins.py           # Chargement et validation des PDF
+├── extraction_notes_ocr.py        # Extraction OCR avec GPT-4o Vision
+├── comparaison_notes.py           # Comparaison intelligente et détection d'anomalies
+├── rapport_comparaison.py         # Génération de rapports (TXT, JSON, CSV, PDF)
+├── concordance_checker.py         # Vérification de concordance globale
+├── integration_admin.py           # Intégration avec l'admin existant
+└── tests/
+    ├── __init__.py
+    └── test_agent_ocr.py          # Tests unitaires complets
+```
+
+## 🚀 Installation
+
+### Prérequis
+
+- Python 3.8+
+- Clé API OpenAI (pour GPT-4o Vision)
+- Modules admin existants (admin_utils, admin_config, etc.)
+
+### Installation des dépendances
+
+```bash
+# Installation des dépendances principales
+pip install -r requirements.txt
+
+# Ou installation manuelle
+pip install pydantic>=2.0.0 langgraph>=0.1.0 openai>=1.0.0 python-dotenv>=1.0.0
+pip install PyMuPDF>=1.23.0 reportlab>=4.0.0 pandas>=2.0.0 streamlit>=1.28.0
+```
+
+### Configuration
+
+1. **Créer un fichier `.env`** dans le dossier racine :
+```env
+OPENAI_API_KEY=votre_cle_api_openai_ici
+```
+
+2. **Vérifier l'installation** :
+```python
+from agent_OCR_Comparaison import valider_environnement
+print(valider_environnement())
+```
+
+## 📖 Utilisation
+
+### Utilisation simple
+
+```python
+from agent_OCR_Comparaison import analyser_candidature_simple, NoteManuelle, ConfigurationOCR
+
+# Configuration
+config = ConfigurationOCR(
+    moteur_ocr="gpt-4o",
+    seuil_confiance_ocr=0.7,
+    tolerance_ecart_notes=1.0
+)
+
+# Notes saisies par le candidat
+notes_manuelles = [
+    NoteManuelle(matiere="Mathématiques", note=15.5, coefficient=3),
+    NoteManuelle(matiere="Français", note=14.0, coefficient=3),
+    NoteManuelle(matiere="Histoire-Géographie", note=16.0, coefficient=2),
+]
+
+# Analyse de la candidature
+resultat = analyser_candidature_simple(
+    dossier_candidature="/path/to/candidature/DUPONT_Jean_20241201/",
+    notes_manuelles=notes_manuelles,
+    config=config
+)
+
+# Résultats
+if resultat.resultat_comparaison:
+    comp = resultat.resultat_comparaison
+    print(f"Recommandation: {comp.recommandation_validation}")
+    print(f"Score confiance: {comp.score_confiance_final:.1%}")
+    print(f"Correspondances: {comp.correspondances_trouvees}/{comp.total_notes_manuelles}")
+    print(f"Anomalies: {len(comp.anomalies)}")
+```
+
+### Utilisation avancée avec workflow
+
+```python
+from agent_OCR_Comparaison import WorkflowOCRComparaison, ConfigurationOCR
+
+# Configuration avancée
+config = ConfigurationOCR(
+    moteur_ocr="gpt-4o",
+    seuil_confiance_ocr=0.7,
+    tolerance_ecart_notes=1.0,
+    score_confiance_minimum=0.8,
+    max_anomalies_critiques=0,
+    max_anomalies_elevees=2,
+    generer_rapport_pdf=True,
+    debug_mode=False
+)
+
+# Créer le workflow
+workflow = WorkflowOCRComparaison(config)
+
+# Analyser une candidature complète
+resultat = workflow.analyser_candidature(
+    dossier_candidature="/path/to/candidature/",
+    notes_manuelles=notes_manuelles,
+    candidat_nom="Dupont",
+    candidat_prenom="Jean",
+    reference_candidature="CAND2024001"
+)
+
+# Résultats détaillés
+print(f"Statut workflow: {resultat.workflow_status}")
+print(f"Durée: {resultat.duree_execution:.2f}s")
+print(f"Bulletins analysés: {len(resultat.bulletins_info)}")
+
+if resultat.erreurs_rencontrees:
+    print("Erreurs:", resultat.erreurs_rencontrees)
+```
+
+### Intégration avec l'admin existant
+
+```python
+# Dans admin_components.py
+from agent_OCR_Comparaison.integration_admin import render_section_ocr_avancee
+
+def render_candidature_details(candidature):
+    # ... code existant ...
+    
+    # Ajouter la section OCR avancée
+    render_section_ocr_avancee(candidature)
+```
+
+## 🔧 Configuration
+
+### Paramètres principaux
+
+| Paramètre | Type | Défaut | Description |
+|-----------|------|--------|-------------|
+| `moteur_ocr` | str | "gpt-4o" | Moteur OCR à utiliser |
+| `seuil_confiance_ocr` | float | 0.7 | Seuil de confiance minimum OCR |
+| `tolerance_ecart_notes` | float | 1.0 | Tolérance d'écart en points |
+| `score_confiance_minimum` | float | 0.8 | Score minimum validation auto |
+| `max_anomalies_critiques` | int | 0 | Nombre max d'anomalies critiques |
+| `generer_rapport_pdf` | bool | True | Générer des rapports PDF |
+
+### Configuration avancée
+
+```python
+config = ConfigurationOCR(
+    # OCR
+    moteur_ocr="gpt-4o",
+    seuil_confiance_ocr=0.7,
+    resolution_images=300,
+    
+    # Comparaison
+    tolerance_ecart_notes=1.0,
+    seuil_similarite_matieres=0.7,
+    
+    # Validation
+    score_confiance_minimum=0.8,
+    max_anomalies_critiques=0,
+    max_anomalies_elevees=2,
+    
+    # Options
+    debug_mode=False,
+    sauvegarder_images_temp=False,
+    generer_rapport_pdf=True
+)
+```
+
+## 📊 Formats de sortie
+
+### Résultat de comparaison
+
+```python
+resultat.resultat_comparaison:
+    - correspondances_trouvees: int
+    - taux_correspondance: float
+    - confiance_globale: float
+    - recommandation_validation: str
+    - score_confiance_final: float
+    - anomalies: List[AnomalieDetectee]
+    - comparaisons: List[ComparaisonNote]
+```
+
+### Recommandations possibles
+
+- `VALIDATION_AUTOMATIQUE_RECOMMANDEE` : ✅ Validation automatique possible
+- `VERIFICATION_MANUELLE_LEGERE` : ⚠️ Vérification rapide recommandée
+- `VERIFICATION_MANUELLE_APPROFONDIE` : 🔍 Vérification détaillée nécessaire
+- `REJET_RECOMMANDE` : ❌ Rejet ou documents supplémentaires requis
+
+### Rapports générés
+
+- **TXT** : Rapport détaillé lisible
+- **JSON** : Données structurées pour traitement automatique
+- **CSV** : Comparaisons pour analyse statistique
+- **PDF** : Rapport professionnel avec graphiques
+
+## 🚨 Types d'anomalies détectées
+
+| Type | Sévérité | Description |
+|------|----------|-------------|
+| `ECART_NOTE_MAJEUR` | 🔴 Critique | Écart >2 points entre OCR et manuel |
+| `NOTE_MANQUANTE_OCR` | 🟡 Moyenne | Note saisie non trouvée dans OCR |
+| `NOTE_SUPPLEMENTAIRE_OCR` | 🟢 Faible | Note OCR non saisie manuellement |
+| `CONFIANCE_OCR_FAIBLE` | 🟡 Moyenne | Extraction OCR peu fiable |
+| `MOYENNE_INCOHERENTE` | 🔴 Élevée | Moyennes globales très différentes |
+
+## 🛠️ Développement
+
+### Structure du code
+
+```python
+# Modèles de données (models.py)
+@dataclass
+class NoteManuelle:
+    matiere: str
+    note: float
+    coefficient: int
+
+# Workflow principal (workflow_ocr_comparaison.py)
+class WorkflowOCRComparaison:
+    def analyser_candidature(self, ...):
+        # Workflow LangGraph complet
+
+# Comparaison (comparaison_notes.py)
+class ComparateurNotes:
+    def comparer_notes(self, ...):
+        # Algorithmes de comparaison et détection d'anomalies
+```
+
+### Extensibilité
+
+- **Nouveaux moteurs OCR** : Ajouter dans `extraction_notes_ocr.py`
+- **Nouvelles anomalies** : Étendre `SeveriteAnomalie` et `AnomalieDetectee`
+- **Nouveaux formats** : Ajouter dans `rapport_comparaison.py`
+- **Nouvelles validations** : Étendre `concordance_checker.py`
+
+### Contribution
+
+1. Fork le projet
+2. Créer une branche feature (`git checkout -b feature/nouvelle-fonctionnalite`)
+3. Ajouter des tests pour la nouvelle fonctionnalité
+4. Committer les changements (`git commit -am 'Ajout nouvelle fonctionnalité'`)
+5. Pousser vers la branche (`git push origin feature/nouvelle-fonctionnalite`)
+6. Créer une Pull Request
+
+## 🐛 Problèmes courants
+
+### Erreur "OpenAI API non configurée"
+
+```bash
+# Solution : Créer le fichier .env
+echo "OPENAI_API_KEY=votre_cle" > .env
+```
+
+### Erreur "Module non trouvé"
+
+```bash
+# Solution : Installer les dépendances
+pip install -r requirements.txt
+```
+
+### OCR peu précis
+
+- Vérifier la qualité des PDFs source
+- Augmenter la résolution (`resolution_images=600`)
+- Utiliser le prétraitement d'images
+- Ajuster le seuil de confiance
+
+### Faux positifs dans les anomalies
+
+- Ajuster `tolerance_ecart_notes`
+- Modifier `seuil_similarite_matieres`
+- Personnaliser les patterns de matières
+
+## 📚 Références
+
+- [Documentation OpenAI GPT-4o Vision](https://platform.openai.com/docs/guides/vision)
+- [LangGraph Documentation](https://langchain-ai.github.io/langgraph/)
+- [Pydantic Documentation](https://docs.pydantic.dev/)
+- [PyMuPDF Documentation](https://pymupdf.readthedocs.io/)
+- [ReportLab Documentation](https://docs.reportlab.com/)
+
+## 📄 Licence
+
+Ce projet est sous licence MIT. Voir le fichier [LICENSE](LICENSE) pour plus de détails.
+
+## 👥 Équipe
+
+Développé par l'équipe du système d'administration des candidatures.
+
+## 🆕 Changelog
+
+### v2.0.0 (Actuel)
+- ✨ Extraction OCR avec GPT-4o Vision
+- ✨ Workflow LangGraph complet
+- ✨ Comparaison intelligente avec détection d'anomalies
+- ✨ Rapports multi-formats (TXT, JSON, CSV, PDF)
+- ✨ Intégration avec l'admin existant
+- ✨ Tests unitaires complets
+- ✨ Documentation complète
+
+### v1.0.0 (Baseline)
+- ✨ Prototype initial avec OCR basique
+- ✨ Comparaison simple
+- ✨ Rapports texte uniquement
+
+---
+
+🎯 **Pour toute question ou support**, contactez l'équipe de développement ou consultez la documentation intégrée avec `help(agent_OCR_Comparaison)`.
