@@ -13,24 +13,6 @@ Cet agent permet de :
 - **📊 Générer des rapports** détaillés de validation
 - **✅ Recommander** la validation ou le rejet automatiquement
 
-## 🏗️ Architecture
-
-```
-agent_OCR_Comparaison/
-├── __init__.py                    # Package principal et exports
-├── models.py                      # Modèles Pydantic (notes, bulletins, résultats)
-├── utils_candidature.py           # Utilitaires pour candidatures
-├── workflow_ocr_comparaison.py    # Workflow principal LangGraph
-├── charger_bulletins.py           # Chargement et validation des PDF
-├── extraction_notes_ocr.py        # Extraction OCR avec GPT-4o Vision
-├── comparaison_notes.py           # Comparaison intelligente et détection d'anomalies
-├── rapport_comparaison.py         # Génération de rapports (TXT, JSON, CSV, PDF)
-├── concordance_checker.py         # Vérification de concordance globale
-├── integration_admin.py           # Intégration avec l'admin existant
-└── tests/
-    ├── __init__.py
-    └── test_agent_ocr.py          # Tests unitaires complets
-```
 
 ## 🚀 Installation
 
